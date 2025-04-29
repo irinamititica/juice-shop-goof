@@ -4,27 +4,47 @@
 # https://docs.microsoft.com/azure/devops/pipelines/languages/javascript
 
 trigger:
-- master
+  branches:
+    include:
+      - main
 
 pool:
-  vmImage: ubuntu-latest
+  vmImage: 'ubuntu-latest'
+
+variables:
+  MAVEN_OPTS: "-Xmx1024m"
 
 steps:
+- task: JavaToolInstaller@0
+  inputs:
+    versionSpec: '17'
+    jdkArchitectureOption: 'x64'
+    jdkSourceOption: 'PreInstalled'
+  displayName: 'Install Java 17'
+
+- task: Maven@3
+  inputs:
+    mavenPomFile: 'pom.xml'
+    goals: 'clean install'
+    options: '-Xmx1024m'
+    publishJUnitResults: true
+    testResultsFiles: '**/surefire-reports/TEST-*.xml'
+  displayName: 'Build with Maven'
+
 - task: NodeTool@0
   inputs:
     versionSpec: '20.x'
   displayName: 'Install Node.js'
 
 - script: |
-    npm install
-    npm run build
-  displayName: 'npm install and build'
-
+    npm install -g snyk
+  displayName: 'Install Snyk CLI'
 
 - script: |
-    npm install snyk -g
-    snyk test --all-projects
-  displayName: 'snyk install and test'
+    snyk auth $(SNYK_TOKEN)
+  displayName: 'Authenticate Snyk'
 
-env:
-    SNYK_TOKEN: $(SNYK_TOKEN)
+- script: |
+    snyk test --all-projects
+  displayName: 'Run Snyk Test'
+
