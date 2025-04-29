@@ -31,10 +31,7 @@ steps:
     testResultsFiles: '**/surefire-reports/TEST-*.xml'
   displayName: 'Build with Maven'
 
-- task: NodeTool@0
-  inputs:
-    versionSpec: '20.x'
-  displayName: 'Install Node.js'
+
 
 - task: SnykSecurityScan@1
   inputs:
